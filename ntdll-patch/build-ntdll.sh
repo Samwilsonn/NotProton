@@ -33,6 +33,11 @@ FEX41069_CLEAN_AARCH64=77ca83b2e1a3a1242f9d2d8868328262b2bcfc3f59bacf8b9389ea7e7
 FEX41069_PATCHED_I386=e16b0199db721a08201b1512476b9eff255624d2faf3696fa57ff74b1a54be5c
 FEX41069_PATCHED_AARCH64=89e4c9e7f0a0a60462c0231ec393168f8bdb04bc8ea1dc22211f25bf3ff2c6b3
 
+STABLE39832_CLEAN_X86_64=6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387
+STABLE39832_CLEAN_I386=2c60ee6b00dd13b7f6cb11017778a041ba6a321eaea194f1fa0dca7eab8403e2
+STABLE39832_PATCHED_X86_64=ab892dfac85b11490eeb988d1b4c8700058c626b2b8de0fc84e012b5c83846ee
+STABLE39832_PATCHED_I386=e641d7b2e81ee13877823494679ba2d87e0d61b8a87e8a1ce92b4fe73631ae74
+
 install=0
 [ "${1:-}" = "--install" ] && install=1
 
@@ -56,6 +61,7 @@ flavor_of() {
                 "$CX_ROOT/lib/wine/x86_64-windows/ntdll.dll"; do
         [ -f "$cand" ] || continue
         case "$(sha "$cand")" in
+            "$STABLE39832_CLEAN_X86_64") echo stable-39832; return 0 ;;
             "$ROSETTA_CLEAN_X86_64")      echo rosetta; return 0 ;;
             "$ROSETTA41069_CLEAN_X86_64") echo rosetta-41069; return 0 ;;
         esac
@@ -69,9 +75,9 @@ if [ -z "${FLAVOR:-}" ]; then
 fi
 
 case "$FLAVOR" in
-    rosetta|rosetta-41069) tools="x86_64-w64-mingw32-gcc i686-w64-mingw32-gcc" ;;
+    rosetta|rosetta-41069|stable-39832) tools="x86_64-w64-mingw32-gcc i686-w64-mingw32-gcc" ;;
     fex|fex-41069)         tools="i686-w64-mingw32-gcc clang ld.lld" ;;
-    *) die "unknown flavor $FLAVOR, expected rosetta, rosetta-41069, fex or fex-41069" ;;
+    *) die "unknown flavor $FLAVOR, expected rosetta, rosetta-41069, stable-39832, fex or fex-41069" ;;
 esac
 
 for t in $tools; do
@@ -116,6 +122,13 @@ patch_one() {
 }
 
 case "$FLAVOR" in
+    stable-39832)
+        ARCHES="x86_64-windows i386-windows"
+        patch_one x86_64-windows build.sh 39832 detour2-39832.bin \
+            "$STABLE39832_CLEAN_X86_64" "$STABLE39832_PATCHED_X86_64"
+        patch_one i386-windows build32.sh 39832 detour32-39832.bin \
+            "$STABLE39832_CLEAN_I386" "$STABLE39832_PATCHED_I386"
+        ;;
     rosetta)
         ARCHES="x86_64-windows i386-windows"
         patch_one x86_64-windows build.sh   rosetta detour2.bin \

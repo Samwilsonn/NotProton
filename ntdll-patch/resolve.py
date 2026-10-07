@@ -11,6 +11,19 @@ PAYLOAD = {0x8664: 864, 0x14c: 1376, 0xaa64: 868}  # detour2.bin, detour32.bin, 
 # Keyed by input sha256 so the comparison only runs against the build the tree pins, so a
 # new build will report derived values rather than a wall of expected mismatches
 PINNED = {
+    '6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387':
+        {'hookRVA': 0x44972, 'stolen': '4883bc24f000000000', 'caveRVA': 0xae000,
+         'caveSize': 4096, 'wm': 'r14', 'resume': 0x4497b, 'load_path': 0xd0,
+         'payload': '32ce53264d2fd4db676ba4ac3fc6ee9faee57fbcd2ec6950c0281db3a50abae7',
+         'exports': {'LdrGetDllHandle': 0x170014bc0, 'LdrLoadDll': 0x170015680,
+                     'NtProtectVirtualMemory': 0x17000f380}},
+    '2c60ee6b00dd13b7f6cb11017778a041ba6a321eaea194f1fa0dca7eab8403e2':
+        {'hookRVA': 0x43b40, 'stolen': 'f645c0017526', 'caveRVA': 0xaa000,
+         'caveSize': 4096, 'wm': 'esi', 'resume': 0x43b46, 'load_path': -0x54,
+         'payload': 'be465bc936cafafae4aa1b4c41f668e08848492d9858c2cf2ad483a9f1ab25e5',
+         'exports': {'LdrGetDllHandle': 0x7bc12c60, 'LdrLoadDll': 0x7bc13750,
+                     'NtProtectVirtualMemory': 0x7bc0d584, 'NtOpenFile': 0x7bc0d3b4,
+                     'NtReadFile': 0x7bc0d0e4, 'NtClose': 0x7bc0d174}},
     '04c7200b6645decb7c2d1ba6b0195abc9af83257072558d11aa72cc067ac3377':
         {'hookRVA': 0x51f15, 'stolen': '4883bc24f000000000', 'caveRVA': 0x80be0, 'wm': 'rsi',
          'resume': 0x51f1e, 'load_path': 0xd0,
@@ -97,7 +110,7 @@ SUBREG = {'al': 'eax', 'ah': 'eax', 'ax': 'eax', 'bl': 'ebx', 'bh': 'ebx', 'bx':
 class PE:
     def __init__(self, path):
         self.path = path
-        self.d = open(path, 'rb').read()
+        self.d = pathlib.Path(path).read_bytes()
         e = struct.unpack_from('<I', self.d, 0x3c)[0]
         self.machine = struct.unpack_from('<H', self.d, e + 4)[0]
         nsec = struct.unpack_from('<H', self.d, e + 6)[0]
@@ -330,7 +343,7 @@ def resolve_i386(pe):
     for k in range(anchor - 1, max(anchor - 24, 0), -1):
         i = body[k]
         if i.mnemonic == 'test' and i.operands and i.operands[-1].type == X86.X86_OP_IMM \
-                and i.operands[-1].imm == 2:
+                and i.operands[-1].imm in (1, 2):
             gate = k
             break
     if gate is None:
@@ -386,7 +399,7 @@ def resolve_i386(pe):
             'insn': ' ; '.join(f"{i.mnemonic} {i.op_str}" for i in taken),
             'load_path': load_path, 'skip': skip, 'stole_branch': stole_branch,
             'stolen_head': b''.join(i.bytes for i in (taken[:-1] if stole_branch else taken)).hex(),
-            'flags_slot': flags_slot}
+            'flags_slot': flags_slot, 'module_flags_mask': body[gate].operands[-1].imm}
 
 
 def aarch64_walk(md, text, tv):
@@ -715,6 +728,7 @@ def shell_vars(path):
         out['NP_STOLE_BRANCH'] = '1' if r['stole_branch'] else ''
         out['NP_STOLEN_HEAD_BYTES'] = ','.join(
             f"0x{b:02x}" for b in bytes.fromhex(r['stolen_head']))
+        out['NP_MODULE_FLAGS_MASK'] = hex(r['module_flags_mask'])
         out['NP_FLAGS_SLOT'] = ('%#x' if r['flags_slot'] >= 0 else '-%#x') % abs(r['flags_slot'])
 
     for n, s in enumerate(r.get('sites') or [], 1):
