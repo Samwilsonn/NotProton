@@ -3,7 +3,7 @@ import Foundation
 import PackageDescription
 let testsPath = "Tests/NotProtonAppTests"
 let payloadPath = "Sources/NotProtonApp/Resources/payload"
-let packageRoot = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+let packageRoot = URL(fileURLWithPath: Context.packageDirectory)
 let hasTests = FileManager.default.fileExists(
     atPath: packageRoot.appendingPathComponent(testsPath).path)
 
@@ -27,6 +27,8 @@ let package = Package(
                 .copy("Resources/payload.manifest"),
                 .copy("Resources/valve-packages.manifest"),
                 .copy("Resources/detour2.bin"),
+                .copy("Resources/detour2-39832.bin"),
+                .copy("Resources/detour32-39832.bin"),
                 .copy("Resources/detour32.bin"),
                 .copy("Resources/detour32-fex.bin"),
                 .copy("Resources/detour64-fex.bin"),
