@@ -38,6 +38,7 @@ struct RunnerBuild: Sendable, Equatable, Identifiable {
 enum SupportedRunners {
 
     static let all: [RunnerBuild] = [
+
         RunnerBuild(
             bundleVersion: "27.0.0.40921",
             releaseVersion: "20260821",
@@ -92,6 +93,21 @@ enum SupportedRunners {
             patchedNtdll: [
                 .i386Windows: "e16b0199db721a08201b1512476b9eff255624d2faf3696fa57ff74b1a54be5c",
                 .aarch64Windows: "89e4c9e7f0a0a60462c0231ec393168f8bdb04bc8ea1dc22211f25bf3ff2c6b3",
+            ]
+        ),
+        // Experimental stable runner. Exact loader and ntdll hashes remain mandatory.
+        RunnerBuild(
+            bundleVersion: "26.3.0.39832",
+            releaseVersion: "26.3",
+            flavor: nil,
+            loaderSHA256: "b5edb0444b5b25ba0aa5091be1cba11680130895c338cc8044101bce98802a63",
+            cleanNtdll: [
+                .x86_64Windows: "6dff64c00793ce92124f1316985c63783f539f26b392975c70f57637458d2387",
+                .i386Windows: "2c60ee6b00dd13b7f6cb11017778a041ba6a321eaea194f1fa0dca7eab8403e2",
+            ],
+            patchedNtdll: [
+                .x86_64Windows: "ab892dfac85b11490eeb988d1b4c8700058c626b2b8de0fc84e012b5c83846ee",
+                .i386Windows: "e641d7b2e81ee13877823494679ba2d87e0d61b8a87e8a1ce92b4fe73631ae74",
             ]
         ),
     ]
